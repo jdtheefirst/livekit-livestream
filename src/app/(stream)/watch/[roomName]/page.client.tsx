@@ -2,6 +2,7 @@
 
 import { Chat } from "@/components/chat";
 import { ReactionBar } from "@/components/reaction-bar";
+import ShareableLinks from "@/components/shareable-links";
 import { Spinner } from "@/components/spinner";
 import { StreamPlayer } from "@/components/stream-player";
 import { TokenContext } from "@/components/token-context";
@@ -32,6 +33,7 @@ export default function WatchPage({
   const [authToken, setAuthToken] = useState("");
   const [roomToken, setRoomToken] = useState("");
   const [loading, setLoading] = useState(false);
+  // https://yourdomain.com/watch/[roomName]
 
   const onJoin = async () => {
     setLoading(true);
@@ -108,6 +110,7 @@ export default function WatchPage({
               <StreamPlayer />
             </Box>
             <ReactionBar />
+            <ShareableLinks roomName={roomName} />
           </Flex>
           <Box className="bg-accent-2 min-w-[280px] border-l border-accent-5">
             <Chat />

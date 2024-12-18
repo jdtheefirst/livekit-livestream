@@ -7,8 +7,8 @@ import { Button, Flex, Text } from "@radix-ui/themes";
 
 export function HomeActions() {
   return (
-    <Flex direction="column" gap="4" justify="center" align="center">
-      <Flex gap="2">
+    <Flex direction="column" gap="4" align="center" className="w-full">
+      <Flex gap="2" justify="center" wrap="wrap">
         <BroadcastDialog>
           <Button size="3">Stream from browser</Button>
         </BroadcastDialog>
@@ -18,7 +18,7 @@ export function HomeActions() {
       </Flex>
       <Text size="1">- OR -</Text>
       <JoinDialog>
-        <Button variant="outline" size="3" className="w-full">
+        <Button variant="outline" size="3" className="w-full sm:w-auto">
           Join existing stream
         </Button>
       </JoinDialog>

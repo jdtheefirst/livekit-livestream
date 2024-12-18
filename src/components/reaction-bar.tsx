@@ -22,7 +22,7 @@ export function ReactionBar() {
       gap="2"
       justify="center"
       align="center"
-      className="border-t border-accent-5 bg-accent-3 h-[100px] text-center"
+      className="border-t border-accent-5 bg-accent-3 h-[50px] text-center"
     >
       <Tooltip content="Fire" delayDuration={0}>
         <Button size="4" variant="outline" onClick={() => onSend("🔥")}>
