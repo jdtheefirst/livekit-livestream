@@ -20,7 +20,12 @@ import {
   Text,
   TextField,
 } from "@radix-ui/themes";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+
+interface props {
+  roomName: String | undefined;
+  event: String | undefined;
+}
 
 export default function WatchPage({
   roomName,
@@ -34,6 +39,49 @@ export default function WatchPage({
   const [roomToken, setRoomToken] = useState("");
   const [loading, setLoading] = useState(false);
   // https://yourdomain.com/watch/[roomName]
+
+  const [streamDetails, setStreamDetails] = useState(null);
+  const [error, setError] = useState("");
+
+  const fetchRoomSchedule = async (roomName) => {
+    const response = await fetch(`/api/schedule?room=${roomName}`);
+    const schedule = await response.json();
+    return schedule;
+  };
+
+  useEffect(() => {
+    fetchRoomSchedule(roomName).then((schedule) => {
+      const now = new Date();
+      const isLive = schedule.some(
+        (event) =>
+          now >= new Date(event.StartTime) && now <= new Date(event.EndTime)
+      );
+      if (!isLive) {
+        alert("This room is not currently live.");
+      }
+    });
+  }, [roomName]);
+
+  useEffect(() => {
+    // Fetch stream details from the API
+    const fetchStreamDetails = async () => {
+      const res = await fetch(`/api/schedule/${roomName}`);
+      const data = await res.json();
+      setStreamDetails(data);
+      const currentTime = new Date();
+      const startTime = new Date(data.startTime);
+      const endTime = new Date(data.endTime);
+
+      if (currentTime < startTime || currentTime > endTime) {
+        setError("This stream is not live at the moment.");
+      }
+    };
+    fetchStreamDetails();
+  }, [roomName]);
+
+  if (error) {
+    return <div>{error}</div>;
+  }
 
   const onJoin = async () => {
     setLoading(true);
