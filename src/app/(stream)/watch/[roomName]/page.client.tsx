@@ -1,106 +1,141 @@
 "use client";
 
-import { Chat } from "@/components/chat";
-import { ReactionBar } from "@/components/reaction-bar";
-import ShareableLinks from "@/components/shareable-links";
-import { Spinner } from "@/components/spinner";
-import { StreamPlayer } from "@/components/stream-player";
-import { TokenContext } from "@/components/token-context";
-import { JoinStreamResponse } from "@/lib/controller";
-import { cn } from "@/lib/utils";
+import { useEffect, useState } from "react";
 import { LiveKitRoom } from "@livekit/components-react";
-import { ArrowRightIcon, PersonIcon } from "@radix-ui/react-icons";
 import {
+  Flex,
+  Card,
+  Heading,
+  Button,
+  TextField,
+  Text,
   Avatar,
   Box,
-  Button,
-  Card,
-  Flex,
-  Heading,
-  Text,
-  TextField,
 } from "@radix-ui/themes";
-import { useEffect, useState } from "react";
+import { Spinner } from "@/components/spinner";
+import { StreamPlayer } from "@/components/stream-player";
+import { ReactionBar } from "@/components/reaction-bar";
+import ShareableLinks from "@/components/shareable-links";
+import { Chat } from "@/components/chat";
+import { TokenContext } from "@/components/token-context";
+import { ArrowRightIcon, PersonIcon } from "@radix-ui/react-icons";
+import moment from "moment";
 
-interface props {
-  roomName: String | undefined;
-  event: String | undefined;
+interface EventDetails {
+  roomName: string;
+  description?: string;
+  location?: string;
+  participants?: string[];
+  startTime: string;
+  endTime: string;
+  isAllDay?: boolean;
+  recurrenceRule?: string;
 }
 
-export default function WatchPage({
-  roomName,
-  serverUrl,
-}: {
+interface WatchPageProps {
   roomName: string;
   serverUrl: string;
-}) {
+}
+
+export default function WatchPage({ roomName, serverUrl }: WatchPageProps) {
   const [name, setName] = useState("");
   const [authToken, setAuthToken] = useState("");
   const [roomToken, setRoomToken] = useState("");
   const [loading, setLoading] = useState(false);
-  // https://yourdomain.com/watch/[roomName]
-
-  const [streamDetails, setStreamDetails] = useState(null);
-  const [error, setError] = useState("");
-
-  const fetchRoomSchedule = async (roomName) => {
-    const response = await fetch(`/api/schedule?room=${roomName}`);
-    const schedule = await response.json();
-    return schedule;
-  };
+  const [error, setError] = useState<string | null>(null);
+  const [isLive, setIsLive] = useState(false);
+  const [event, setEvent] = useState<EventDetails | null>(null);
 
   useEffect(() => {
-    fetchRoomSchedule(roomName).then((schedule) => {
-      const now = new Date();
-      const isLive = schedule.some(
-        (event) =>
-          now >= new Date(event.StartTime) && now <= new Date(event.EndTime)
-      );
-      if (!isLive) {
-        alert("This room is not currently live.");
-      }
-    });
-  }, [roomName]);
+    const fetchRoomSchedule = async () => {
+      try {
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_SITE_URL}/api/schedule/room?room=${roomName}`
+        );
+        if (!res.ok) throw new Error("Failed to fetch schedule.");
 
-  useEffect(() => {
-    // Fetch stream details from the API
-    const fetchStreamDetails = async () => {
-      const res = await fetch(`/api/schedule/${roomName}`);
-      const data = await res.json();
-      setStreamDetails(data);
-      const currentTime = new Date();
-      const startTime = new Date(data.startTime);
-      const endTime = new Date(data.endTime);
+        const schedule: EventDetails = await res.json();
+        setEvent(schedule);
 
-      if (currentTime < startTime || currentTime > endTime) {
-        setError("This stream is not live at the moment.");
+        const now = new Date();
+        const eventStart = new Date(schedule.startTime);
+        const eventEnd = new Date(schedule.endTime);
+
+        if (now >= eventStart && now <= eventEnd) {
+          setIsLive(true);
+        } else {
+          setError("This stream has ended, expired, or does not exist.");
+        }
+      } catch (err) {
+        setError("An error occurred while fetching the schedule.");
       }
     };
-    fetchStreamDetails();
-  }, [roomName]);
 
-  if (error) {
-    return <div>{error}</div>;
-  }
+    fetchRoomSchedule();
+  }, [roomName]);
 
   const onJoin = async () => {
     setLoading(true);
-    const res = await fetch("/api/join_stream", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        room_name: roomName,
-        identity: name,
-      }),
-    });
-    const {
-      auth_token,
-      connection_details: { token },
-    } = (await res.json()) as JoinStreamResponse;
+    try {
+      const res = await fetch("/api/join_stream", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ room_name: roomName, identity: name }),
+      });
 
-    setAuthToken(auth_token);
-    setRoomToken(token);
+      if (!res.ok) throw new Error("Failed to join the stream.");
+
+      const { auth_token, connection_details } = await res.json();
+      setAuthToken(auth_token);
+      setRoomToken(connection_details.token);
+    } catch (err) {
+      setError("Unable to join the stream. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
+
+  if (error) {
+    return (
+      <Flex align="center" justify="center" className="min-h-screen">
+        <Card className="p-4 w-[400px]">
+          <Heading size="4">Error</Heading>
+          <Text mt="2">{error}</Text>
+          <ShareableLinks roomName={roomName} />
+        </Card>
+      </Flex>
+    );
+  }
+
+  if (!isLive) {
+    return (
+      <Flex align="center" justify="center" className="min-h-screen">
+        <Card className="p-4 w-[400px]">
+          <Heading size="4">{decodeURI(roomName)} Not Live</Heading>
+          <Text mt="2">
+            The stream is not live at the moment. Please check back later.
+          </Text>
+          {event && (
+            <>
+              <Text mt="2">
+                Start: {moment(event.startTime).format("YYYY-MM-DD HH:mm")} |
+                End: {moment(event.endTime).format("YYYY-MM-DD HH:mm")}
+              </Text>
+              {event.description && (
+                <Text mt="2">Description: {event.description}</Text>
+              )}
+              {event.participants && event.participants.length > 0 && (
+                <Text mt="2">
+                  Participants: {event.participants.join(", ")}
+                </Text>
+              )}
+            </>
+          )}
+          <ShareableLinks roomName={roomName} />
+        </Card>
+      </Flex>
+    );
+  }
 
   if (!authToken || !roomToken) {
     return (
@@ -122,7 +157,7 @@ export default function WatchPage({
                 />
               </TextField.Slot>
               <TextField.Input
-                placeholder="Roger Dunn"
+                placeholder="Your Name"
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
@@ -138,8 +173,7 @@ export default function WatchPage({
                 </Flex>
               ) : (
                 <>
-                  Join as viewer{" "}
-                  <ArrowRightIcon className={cn(name && "animate-wiggle")} />
+                  Join Stream <ArrowRightIcon />
                 </>
               )}
             </Button>

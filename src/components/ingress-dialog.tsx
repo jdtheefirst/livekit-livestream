@@ -28,25 +28,52 @@ export function IngressDialog({ children }: { children: React.ReactNode }) {
   const [allowParticipation, setAllowParticipation] = useState(true);
   const [ingressResponse, setIngressResponse] =
     useState<CreateIngressResponse>();
+  const [error, setError] = useState<string | null>(null);
 
   const onCreateIngress = async () => {
     setLoading(true);
+    setError(null);
 
-    const res = await fetch("/api/create_ingress", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        room_name: roomName,
-        ingress_type: type,
-        metadata: {
-          creator_identity: name,
-          enable_chat: enableChat,
-          allow_participation: allowParticipation,
-        },
-      }),
-    });
+    // Check if the room exists
+    try {
+      const checkRes = await fetch(
+        `${process.env.NEXT_PUBLIC_SITE_URL}/api/check_room?room_name=${roomName}`
+      );
+      const schedule = await checkRes.json();
 
-    setIngressResponse(await res.json());
+      if (schedule.length === 0) {
+        setError("This room is not scheduled, check for typos.");
+        setLoading(false);
+        return;
+      }
+    } catch (err) {
+      setError("Failed to verify room existence. Please try again later.");
+      setLoading(false);
+      return;
+    }
+
+    // Create ingress endpoint
+    try {
+      const res = await fetch("/api/create_ingress", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          room_name: roomName,
+          ingress_type: type,
+          metadata: {
+            creator_identity: name,
+            enable_chat: enableChat,
+            allow_participation: allowParticipation,
+          },
+        }),
+      });
+
+      setIngressResponse(await res.json());
+    } catch (err) {
+      setError("Failed to create ingress. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -55,6 +82,7 @@ export function IngressDialog({ children }: { children: React.ReactNode }) {
 
       <Dialog.Content style={{ maxWidth: 450 }}>
         {ingressResponse ? (
+          // Display the ingress details
           <>
             <Dialog.Title>Start streaming now</Dialog.Title>
             <Flex direction="column" gap="4" mt="4">
@@ -99,8 +127,14 @@ export function IngressDialog({ children }: { children: React.ReactNode }) {
             </Flex>
           </>
         ) : (
+          // Show the form
           <>
             <Dialog.Title>Setup ingress endpoint</Dialog.Title>
+            {error && (
+              <Text color="red" mb="4" size={"1"}>
+                {error}
+              </Text>
+            )}
             <Flex direction="column" gap="4" mt="4">
               <label>
                 <Text as="div" size="2" mb="1" weight="bold">

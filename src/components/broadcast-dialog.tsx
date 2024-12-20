@@ -22,26 +22,59 @@ export function BroadcastDialog({ children }: { children: React.ReactNode }) {
   const [name, setName] = useState("");
   const [enableChat, setEnableChat] = useState(true);
   const [allowParticipation, setAllowParticipation] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const onGoLive = async () => {
     setLoading(true);
-    const res = await fetch("/api/create_stream", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        room_name: roomName,
-        metadata: {
-          creator_identity: name,
-          enable_chat: enableChat,
-          allow_participation: allowParticipation,
-        },
-      }),
-    });
-    const {
-      auth_token,
-      connection_details: { token },
-    } = (await res.json()) as CreateStreamResponse;
-    router.push(`/host?&at=${auth_token}&rt=${token}`);
+    setError(null);
+
+    try {
+      // Check if the room already exists
+      const checkRes = await fetch(
+        `${process.env.NEXT_PUBLIC_SITE_URL}/api/schedule/room?room=${roomName}`
+      );
+      if (!checkRes.ok) {
+        throw new Error(
+          "Failed to verify room existence. Please try again later."
+        );
+      }
+
+      const schedule = await checkRes.json();
+      if (schedule.length === 0) {
+        setError("This room is not scheduled, check for typos.");
+        setLoading(false);
+        return;
+      }
+
+      // Proceed with creating the room
+      const createRes = await fetch("/api/create_stream", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          room_name: roomName,
+          metadata: {
+            creator_identity: name,
+            enable_chat: enableChat,
+            allow_participation: allowParticipation,
+          },
+        }),
+      });
+
+      if (!createRes.ok) {
+        throw new Error("Failed to create the room.");
+      }
+
+      const {
+        auth_token,
+        connection_details: { token },
+      } = (await createRes.json()) as CreateStreamResponse;
+
+      router.push(`/host?&at=${auth_token}&rt=${token}`);
+    } catch (err: any) {
+      setError(err.message || "An unexpected error occurred.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -51,6 +84,11 @@ export function BroadcastDialog({ children }: { children: React.ReactNode }) {
       <Dialog.Content style={{ maxWidth: 450 }}>
         <Dialog.Title>Create new stream</Dialog.Title>
         <Flex direction="column" gap="4" mt="4">
+          {error && (
+            <Text color="red" size={"1"}>
+              {error}
+            </Text>
+          )}
           <label>
             <Text as="div" size="2" mb="1" weight="bold">
               Room name
@@ -108,6 +146,7 @@ export function BroadcastDialog({ children }: { children: React.ReactNode }) {
                 setName("");
                 setEnableChat(true);
                 setAllowParticipation(true);
+                setError(null);
               }}
             >
               Cancel
