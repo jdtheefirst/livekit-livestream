@@ -33,6 +33,8 @@ export function BroadcastDialog({ children }: { children: React.ReactNode }) {
       const checkRes = await fetch(
         `${process.env.NEXT_PUBLIC_SITE_URL}/api/schedule/room?room=${roomName}`
       );
+      console.log(checkRes.json);
+
       if (!checkRes.ok) {
         throw new Error(
           "Failed to verify room existence. Please try again later."

@@ -34,26 +34,28 @@ export function IngressDialog({ children }: { children: React.ReactNode }) {
     setLoading(true);
     setError(null);
 
-    // Check if the room exists
     try {
+      // Check if the room exists
       const checkRes = await fetch(
-        `${process.env.NEXT_PUBLIC_SITE_URL}/api/check_room?room_name=${roomName}`
+        `${process.env.NEXT_PUBLIC_SITE_URL}/api/schedule/room?room=${roomName}`
       );
+
+      console.log(checkRes.json);
+
+      if (!checkRes.ok) {
+        throw new Error(
+          "Failed to verify room existence. Please try again later."
+        );
+      }
       const schedule = await checkRes.json();
 
       if (schedule.length === 0) {
         setError("This room is not scheduled, check for typos.");
         setLoading(false);
-        return;
+        return; // Stop execution if room is not scheduled
       }
-    } catch (err) {
-      setError("Failed to verify room existence. Please try again later.");
-      setLoading(false);
-      return;
-    }
 
-    // Create ingress endpoint
-    try {
+      // Create ingress endpoint
       const res = await fetch("/api/create_ingress", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -68,11 +70,18 @@ export function IngressDialog({ children }: { children: React.ReactNode }) {
         }),
       });
 
-      setIngressResponse(await res.json());
+      const ingressResponse = await res.json();
+      setIngressResponse(ingressResponse);
     } catch (err) {
-      setError("Failed to create ingress. Please try again.");
+      if (err instanceof Error) {
+        // Use the message property safely
+        setError(err.message || "An error occurred. Please try again.");
+      } else {
+        // Fallback for unknown error types
+        setError("An unknown error occurred. Please try again.");
+      }
     } finally {
-      setLoading(false);
+      setLoading(false); // Stop loading regardless of success or failure
     }
   };
 
