@@ -52,9 +52,6 @@ export default function WatchPage({ roomName, serverUrl }: WatchPageProps) {
         const res = await fetch(
           `${process.env.NEXT_PUBLIC_SITE_URL}/api/schedule/room?room=${roomName}`
         );
-        console.log(res.json);
-
-        if (!res.ok) throw new Error("Failed to fetch schedule.");
 
         const schedule: EventDetails = await res.json();
         setEvent(schedule);
@@ -69,7 +66,7 @@ export default function WatchPage({ roomName, serverUrl }: WatchPageProps) {
           setError("This stream has ended, expired, or does not exist.");
         }
       } catch (err) {
-        setError("An error occurred while fetching the schedule.");
+        setError("Failed to verify room existence. Please try again later.");
       }
     };
 

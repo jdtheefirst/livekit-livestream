@@ -33,13 +33,6 @@ export function BroadcastDialog({ children }: { children: React.ReactNode }) {
       const checkRes = await fetch(
         `${process.env.NEXT_PUBLIC_SITE_URL}/api/schedule/room?room=${roomName}`
       );
-      console.log(checkRes.json);
-
-      if (!checkRes.ok) {
-        throw new Error(
-          "Failed to verify room existence. Please try again later."
-        );
-      }
 
       const schedule = await checkRes.json();
       if (schedule.length === 0) {
@@ -62,10 +55,6 @@ export function BroadcastDialog({ children }: { children: React.ReactNode }) {
         }),
       });
 
-      if (!createRes.ok) {
-        throw new Error("Failed to create the room.");
-      }
-
       const {
         auth_token,
         connection_details: { token },
@@ -73,7 +62,10 @@ export function BroadcastDialog({ children }: { children: React.ReactNode }) {
 
       router.push(`/host?&at=${auth_token}&rt=${token}`);
     } catch (err: any) {
-      setError(err.message || "An unexpected error occurred.");
+      setError(
+        err.message ||
+          "Failed to verify room existence. Please try again later."
+      );
     } finally {
       setLoading(false);
     }

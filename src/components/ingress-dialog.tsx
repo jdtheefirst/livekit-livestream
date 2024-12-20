@@ -40,13 +40,6 @@ export function IngressDialog({ children }: { children: React.ReactNode }) {
         `${process.env.NEXT_PUBLIC_SITE_URL}/api/schedule/room?room=${roomName}`
       );
 
-      console.log(checkRes.json);
-
-      if (!checkRes.ok) {
-        throw new Error(
-          "Failed to verify room existence. Please try again later."
-        );
-      }
       const schedule = await checkRes.json();
 
       if (schedule.length === 0) {
@@ -74,10 +67,11 @@ export function IngressDialog({ children }: { children: React.ReactNode }) {
       setIngressResponse(ingressResponse);
     } catch (err) {
       if (err instanceof Error) {
-        // Use the message property safely
-        setError(err.message || "An error occurred. Please try again.");
+        setError(
+          err.message ||
+            "Failed to verify room existence. Please try again later."
+        );
       } else {
-        // Fallback for unknown error types
         setError("An unknown error occurred. Please try again.");
       }
     } finally {
