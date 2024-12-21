@@ -112,7 +112,7 @@ export default function WatchPage({ roomName, serverUrl }: WatchPageProps) {
     return (
       <Flex align="center" justify="center" className="min-h-screen bg-gray-50">
         <Card className="p-6 max-w-[450px] bg-white rounded-lg shadow-lg border border-gray-200">
-          <Heading size="4" className="text-center text-accent-3 mb-6">
+          <Heading size="4" className="text-center mb-6 text-whitesmoke mb-4">
             {decodeURI(roomName)} Not Live
           </Heading>
           <Text size="3" className="text-center text-gray-600 mb-4">
@@ -121,17 +121,41 @@ export default function WatchPage({ roomName, serverUrl }: WatchPageProps) {
 
           {event && (
             <>
-              <Box className="mb-4">
+              <Box className="flex flex-col mb-4">
                 <Text size="2" className="font-semibold text-gray-700">
                   Start:{" "}
                   <span className="font-normal text-gray-500">
-                    {moment(event.startTime).format("YYYY-MM-DD HH:mm")}
+                    {moment(event.startTime).isSame(new Date(), "day")
+                      ? `Today at ${moment(event.startTime).format("HH:mm")}`
+                      : moment(event.startTime).isSame(
+                          moment().add(1, "days"),
+                          "day"
+                        )
+                      ? `Tomorrow at ${moment(event.startTime).format("HH:mm")}`
+                      : moment(event.startTime).isBefore(
+                          moment().add(7, "days"),
+                          "days"
+                        )
+                      ? moment(event.startTime).calendar()
+                      : moment(event.startTime).format("YYYY-MM-DD HH:mm")}
                   </span>
                 </Text>
                 <Text size="2" className="font-semibold text-gray-700 mt-2">
                   End:{" "}
                   <span className="font-normal text-gray-500">
-                    {moment(event.endTime).format("YYYY-MM-DD HH:mm")}
+                    {moment(event.endTime).isSame(new Date(), "day")
+                      ? `Today at ${moment(event.endTime).format("HH:mm")}`
+                      : moment(event.endTime).isSame(
+                          moment().add(1, "days"),
+                          "day"
+                        )
+                      ? `Tomorrow at ${moment(event.endTime).format("HH:mm")}`
+                      : moment(event.endTime).isBefore(
+                          moment().add(7, "days"),
+                          "days"
+                        )
+                      ? moment(event.endTime).calendar()
+                      : moment(event.endTime).format("YYYY-MM-DD HH:mm")}
                   </span>
                 </Text>
               </Box>
@@ -152,9 +176,7 @@ export default function WatchPage({ roomName, serverUrl }: WatchPageProps) {
             </>
           )}
 
-          <Text size="3" className="text-center text-gray-600 mb-2">
-            Share
-          </Text>
+          <Flex className="text-center mb-2 text-whitesmoke mt-2">Share:</Flex>
           <ShareableLinks roomName={roomName} />
         </Card>
       </Flex>
