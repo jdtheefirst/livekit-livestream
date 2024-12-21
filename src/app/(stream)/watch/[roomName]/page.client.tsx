@@ -112,10 +112,10 @@ export default function WatchPage({ roomName, serverUrl }: WatchPageProps) {
     return (
       <Flex align="center" justify="center" className="min-h-screen bg-gray-50">
         <Card className="p-6 max-w-[450px] bg-white rounded-lg shadow-lg border border-gray-200">
-          <Heading size="4" className="text-center mb-6 text-whitesmoke mb-4">
+          <Heading size="4" className="text-center text-whitesmoke mb-4">
             {decodeURI(roomName)} Not Live
           </Heading>
-          <Text size="3" className="text-center text-gray-600 mb-4">
+          <Text size="3" className="text-center text-gray-600 mb-6">
             The stream is not live at the moment. Please check back later.
           </Text>
 
