@@ -30,6 +30,7 @@ interface EventDetails {
   endTime: string;
   isAllDay?: boolean;
   recurrenceRule?: string;
+  isLive?: boolean | undefined;
 }
 
 interface WatchPageProps {
@@ -43,7 +44,7 @@ export default function WatchPage({ roomName, serverUrl }: WatchPageProps) {
   const [roomToken, setRoomToken] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isLive, setIsLive] = useState(false);
+  const [isLive, setIsLive] = useState<boolean | undefined>(undefined);
   const [event, setEvent] = useState<EventDetails | null>(null);
 
   useEffect(() => {
@@ -52,21 +53,16 @@ export default function WatchPage({ roomName, serverUrl }: WatchPageProps) {
         const res = await fetch(
           `${process.env.NEXT_PUBLIC_SITE_URL}/api/schedule/room?room=${roomName}`
         );
+        if (!res.ok) throw new Error("Room schedule not found.");
 
         const schedule: EventDetails = await res.json();
         setEvent(schedule);
 
-        const now = new Date();
-        const eventStart = new Date(schedule.startTime);
-        const eventEnd = new Date(schedule.endTime);
-
-        if (now >= eventStart && now <= eventEnd) {
-          setIsLive(true);
-        } else {
-          setError("This stream has ended, expired, or does not exist.");
-        }
+        setIsLive(schedule.isLive);
       } catch (err) {
-        setError("Failed to verify room existence. Please try again later.");
+        setError(
+          "We couldn't find the room schedule. Please check the room name or try again later."
+        );
       }
     };
 
@@ -82,13 +78,18 @@ export default function WatchPage({ roomName, serverUrl }: WatchPageProps) {
         body: JSON.stringify({ room_name: roomName, identity: name }),
       });
 
-      if (!res.ok) throw new Error("Failed to join the stream.");
+      if (!res.ok)
+        throw new Error(
+          "Unable to join stream. Invalid room or network issue."
+        );
 
       const { auth_token, connection_details } = await res.json();
       setAuthToken(auth_token);
       setRoomToken(connection_details.token);
     } catch (err) {
-      setError("Unable to join the stream. Please try again.");
+      setError(
+        "There was an issue joining the stream. Check your network or contact support."
+      );
     } finally {
       setLoading(false);
     }
@@ -99,8 +100,9 @@ export default function WatchPage({ roomName, serverUrl }: WatchPageProps) {
       <Flex align="center" justify="center" className="min-h-screen">
         <Card className="p-4 w-[400px]">
           <Heading size="4">Error</Heading>
-          <Text mt="2">{error}</Text>
-          <ShareableLinks roomName={roomName} />
+          <Text mt="2" mb={"4"} align={"center"}>
+            {error}
+          </Text>
         </Card>
       </Flex>
     );
@@ -111,20 +113,22 @@ export default function WatchPage({ roomName, serverUrl }: WatchPageProps) {
       <Flex align="center" justify="center" className="min-h-screen">
         <Card className="p-4 w-[400px]">
           <Heading size="4">{decodeURI(roomName)} Not Live</Heading>
-          <Text mt="2">
+          <Text mt="2" size={"3"}>
             The stream is not live at the moment. Please check back later.
           </Text>
           {event && (
             <>
-              <Text mt="2">
+              <Text mt="2" size={"2"}>
                 Start: {moment(event.startTime).format("YYYY-MM-DD HH:mm")} |
                 End: {moment(event.endTime).format("YYYY-MM-DD HH:mm")}
               </Text>
               {event.description && (
-                <Text mt="2">Description: {event.description}</Text>
+                <Text mt="2" size={"2"}>
+                  Description: {event.description}
+                </Text>
               )}
               {event.participants && event.participants.length > 0 && (
-                <Text mt="2">
+                <Text mt="2" mb={"4"} size={"2"}>
                   Participants: {event.participants.join(", ")}
                 </Text>
               )}
@@ -160,6 +164,7 @@ export default function WatchPage({ roomName, serverUrl }: WatchPageProps) {
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
+                required
               />
             </TextField.Root>
           </label>

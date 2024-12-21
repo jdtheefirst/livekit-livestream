@@ -35,17 +35,18 @@ export function IngressDialog({ children }: { children: React.ReactNode }) {
     setError(null);
 
     try {
-      // Check if the room exists
+      // Check if the room exists and if it's live
       const checkRes = await fetch(
         `${process.env.NEXT_PUBLIC_SITE_URL}/api/schedule/room?room=${roomName}`
       );
 
-      const schedule = await checkRes.json();
-
-      if (schedule.length === 0) {
-        setError("This room is not scheduled, check for typos.");
+      // Check if the response is ok
+      if (!checkRes.ok) {
+        setError(
+          "We couldn't find the room schedule. Please check the room name or try again later."
+        );
         setLoading(false);
-        return; // Stop execution if room is not scheduled
+        return;
       }
 
       // Create ingress endpoint
@@ -62,6 +63,10 @@ export function IngressDialog({ children }: { children: React.ReactNode }) {
           },
         }),
       });
+
+      if (!res.ok) {
+        throw new Error("Failed to create ingress.");
+      }
 
       const ingressResponse = await res.json();
       setIngressResponse(ingressResponse);

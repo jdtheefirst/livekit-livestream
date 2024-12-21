@@ -29,19 +29,20 @@ export function BroadcastDialog({ children }: { children: React.ReactNode }) {
     setError(null);
 
     try {
-      // Check if the room already exists
+      // Check if the room exists and if it's live
       const checkRes = await fetch(
         `${process.env.NEXT_PUBLIC_SITE_URL}/api/schedule/room?room=${roomName}`
       );
 
-      const schedule = await checkRes.json();
-      if (schedule.length === 0) {
-        setError("This room is not scheduled, check for typos.");
+      if (!checkRes.ok) {
+        setError(
+          "We couldn't find the room schedule. Please check the room name or try again later."
+        );
         setLoading(false);
         return;
       }
 
-      // Proceed with creating the room
+      // Proceed with creating the stream
       const createRes = await fetch("/api/create_stream", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -55,17 +56,26 @@ export function BroadcastDialog({ children }: { children: React.ReactNode }) {
         }),
       });
 
+      if (!createRes.ok) {
+        throw new Error("Failed to create the stream.");
+      }
+
       const {
         auth_token,
         connection_details: { token },
-      } = (await createRes.json()) as CreateStreamResponse;
+      } = await createRes.json();
 
+      // Redirect to the host page with the tokens
       router.push(`/host?&at=${auth_token}&rt=${token}`);
-    } catch (err: any) {
-      setError(
-        err.message ||
-          "Failed to verify room existence. Please try again later."
-      );
+    } catch (err) {
+      if (err instanceof Error) {
+        setError(
+          err.message ||
+            "Failed to verify room existence. Please try again later."
+        );
+      } else {
+        setError("An unknown error occurred. Please try again.");
+      }
     } finally {
       setLoading(false);
     }
