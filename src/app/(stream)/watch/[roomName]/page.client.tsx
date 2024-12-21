@@ -115,9 +115,11 @@ export default function WatchPage({ roomName, serverUrl }: WatchPageProps) {
           <Heading size="4" className="text-center text-whitesmoke mb-4">
             {decodeURI(roomName)} Not Live
           </Heading>
-          <Text size="3" className="text-center text-gray-600 mb-6">
-            The stream is not live at the moment. Please check back later.
-          </Text>
+          <Flex className="flex-col mb-6">
+            <Text size="3" className="text-center text-gray-600">
+              The stream is not live at the moment. Please check back later.
+            </Text>
+          </Flex>
 
           {event && (
             <Box className="flex flex-col mb-6">
