@@ -110,30 +110,51 @@ export default function WatchPage({ roomName, serverUrl }: WatchPageProps) {
 
   if (!isLive) {
     return (
-      <Flex align="center" justify="center" className="min-h-screen">
-        <Card className="p-4 w-[400px]">
-          <Heading size="4">{decodeURI(roomName)} Not Live</Heading>
-          <Text mt="2" size={"3"}>
+      <Flex align="center" justify="center" className="min-h-screen bg-gray-50">
+        <Card className="p-6 max-w-[450px] bg-white rounded-lg shadow-lg border border-gray-200">
+          <Heading size="4" className="text-center text-accent-3 mb-6">
+            {decodeURI(roomName)} Not Live
+          </Heading>
+          <Text size="3" className="text-center text-gray-600 mb-4">
             The stream is not live at the moment. Please check back later.
           </Text>
+
           {event && (
             <>
-              <Text mt="2" size={"2"}>
-                Start: {moment(event.startTime).format("YYYY-MM-DD HH:mm")} |
-                End: {moment(event.endTime).format("YYYY-MM-DD HH:mm")}
-              </Text>
+              <Box className="mb-4">
+                <Text size="2" className="font-semibold text-gray-700">
+                  Start:{" "}
+                  <span className="font-normal text-gray-500">
+                    {moment(event.startTime).format("YYYY-MM-DD HH:mm")}
+                  </span>
+                </Text>
+                <Text size="2" className="font-semibold text-gray-700 mt-2">
+                  End:{" "}
+                  <span className="font-normal text-gray-500">
+                    {moment(event.endTime).format("YYYY-MM-DD HH:mm")}
+                  </span>
+                </Text>
+              </Box>
+
               {event.description && (
-                <Text mt="2" size={"2"}>
-                  Description: {event.description}
+                <Text size="2" className="text-gray-600 mt-2">
+                  <span className="font-semibold">Description:</span>{" "}
+                  {event.description}
                 </Text>
               )}
+
               {event.participants && event.participants.length > 0 && (
-                <Text mt="2" mb={"4"} size={"2"}>
-                  Participants: {event.participants.join(", ")}
+                <Text size="2" className="text-gray-600 mt-2 mb-6">
+                  <span className="font-semibold">Participants:</span>{" "}
+                  {event.participants.join(", ")}
                 </Text>
               )}
             </>
           )}
+
+          <Text size="3" className="text-center text-gray-600 mb-2">
+            Share
+          </Text>
           <ShareableLinks roomName={roomName} />
         </Card>
       </Flex>
