@@ -45,7 +45,6 @@ export function IngressDialog({ children }: { children: React.ReactNode }) {
         setError(
           "We couldn't find the room schedule. Please check the room name or try again later."
         );
-        setLoading(false);
         return;
       }
 
@@ -70,6 +69,7 @@ export function IngressDialog({ children }: { children: React.ReactNode }) {
 
       const ingressResponse = await res.json();
       setIngressResponse(ingressResponse);
+      setLoading(false);
     } catch (err) {
       if (err instanceof Error) {
         setError(

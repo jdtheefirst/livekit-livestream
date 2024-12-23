@@ -38,8 +38,7 @@ export function BroadcastDialog({ children }: { children: React.ReactNode }) {
         setError(
           "We couldn't find the room schedule. Please check the room name or try again later."
         );
-        setLoading(false);
-        return;
+        return; // Exit here, but `finally` ensures cleanup
       }
 
       // Proceed with creating the stream
@@ -77,7 +76,7 @@ export function BroadcastDialog({ children }: { children: React.ReactNode }) {
         setError("An unknown error occurred. Please try again.");
       }
     } finally {
-      setLoading(false);
+      setLoading(false); // This ensures cleanup regardless of path
     }
   };
 
