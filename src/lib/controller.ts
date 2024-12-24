@@ -122,6 +122,19 @@ export class Controller {
     room_name,
     ingress_type = "rtmp",
   }: CreateIngressParams): Promise<CreateIngressResponse> {
+    // Fetch all existing ingress sessions
+
+    const existingIngresses = await this.ingressService.listIngress();
+
+    await Promise.all(
+      existingIngresses
+        .filter(
+          (ingress): ingress is IngressInfo & { ingressId: string } =>
+            !!ingress.ingressId
+        )
+        .map((ingress) => this.ingressService.deleteIngress(ingress.ingressId))
+    );
+
     if (!room_name) {
       room_name = generateRoomId();
     }
