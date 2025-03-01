@@ -6,22 +6,42 @@ import {
   FaInstagram,
   FaLink,
 } from "react-icons/fa";
+import moment from "moment";
 
 type ShareableLinksProps = {
   event: {
     roomName: string;
+    description?: string;
+    location?: string;
     startTime: string;
+    endTime: string;
   };
 };
 
 const ShareableLinks: React.FC<ShareableLinksProps> = ({ event }) => {
-  const shareUrl = `https://live.worldsamma.org/watch/${encodeURIComponent(
-    event.roomName
+  const { roomName, description, location, startTime, endTime } = event;
+
+  // Format the date & time as a clock
+  const formattedDate = moment(startTime).format("dddd, MMMM Do YYYY"); // Example: "Sunday, Feb 2, 2025"
+  const formattedStartTime = moment(startTime).format("h:mm A"); // Example: "2:00 PM"
+  const formattedEndTime = moment(endTime).format("h:mm A"); // Example: "3:00 PM"
+
+  // Create a share message
+  const message = `🌟 Join "${roomName}" 🌟
+📍 Location: ${location}
+📅 Date: ${formattedDate}
+🕒 Time: ${formattedStartTime} - ${formattedEndTime}
+📖 Description: ${description}
+
+🔴 Watch Live: https://live.worldsamma.org/watch/${encodeURIComponent(
+    roomName
   )}`;
 
+  const encodedMessage = encodeURIComponent(message);
+
   const handleCopy = () => {
-    navigator.clipboard.writeText(shareUrl);
-    alert("Link copied to clipboard!");
+    navigator.clipboard.writeText(message);
+    alert("Event details copied to clipboard!");
   };
 
   return (
@@ -32,9 +52,7 @@ const ShareableLinks: React.FC<ShareableLinksProps> = ({ event }) => {
       className="border-accent-5 bg-accent-3 h-[50px] text-center"
     >
       <a
-        href={`https://wa.me/?text=Join%20this%20room%20${encodeURIComponent(
-          shareUrl
-        )}`}
+        href={`https://wa.me/?text=${encodedMessage}`}
         target="_blank"
         rel="noopener noreferrer"
         className="p-2 bg-green-500 text-white rounded-full hover:bg-green-600"
@@ -43,9 +61,9 @@ const ShareableLinks: React.FC<ShareableLinksProps> = ({ event }) => {
         <FaWhatsapp size={20} />
       </a>
       <a
-        href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(
-          shareUrl
-        )}`}
+        href={`https://www.facebook.com/sharer/sharer.php?u=https://live.worldsamma.org/watch/${encodeURIComponent(
+          roomName
+        )}&quote=${encodedMessage}`}
         target="_blank"
         rel="noopener noreferrer"
         className="p-2 bg-blue-600 text-white rounded-full hover:bg-blue-700"
@@ -54,9 +72,7 @@ const ShareableLinks: React.FC<ShareableLinksProps> = ({ event }) => {
         <FaFacebook size={20} />
       </a>
       <a
-        href={`https://twitter.com/intent/tweet?text=Join%20this%20room&url=${encodeURIComponent(
-          shareUrl
-        )}`}
+        href={`https://twitter.com/intent/tweet?text=${encodedMessage}`}
         target="_blank"
         rel="noopener noreferrer"
         className="p-2 bg-blue-400 text-white rounded-full hover:bg-blue-500"
