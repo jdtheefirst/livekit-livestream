@@ -8,11 +8,16 @@ import {
 } from "react-icons/fa";
 
 type ShareableLinksProps = {
-  roomName: string;
+  event: {
+    roomName: string;
+    startTime: string;
+  };
 };
 
-const ShareableLinks: React.FC<ShareableLinksProps> = ({ roomName }) => {
-  const shareUrl = `https://live.worldsamma.org/watch/${roomName}`;
+const ShareableLinks: React.FC<ShareableLinksProps> = ({ event }) => {
+  const shareUrl = `https://live.worldsamma.org/watch/${encodeURIComponent(
+    event.roomName
+  )}`;
 
   const handleCopy = () => {
     navigator.clipboard.writeText(shareUrl);
@@ -60,7 +65,7 @@ const ShareableLinks: React.FC<ShareableLinksProps> = ({ roomName }) => {
         <FaTwitter size={20} />
       </a>
       <a
-        href="https://instagram.com" // Instagram does not allow direct sharing links
+        href="https://instagram.com"
         target="_blank"
         rel="noopener noreferrer"
         className="p-2 bg-pink-500 text-white rounded-full hover:bg-pink-600"

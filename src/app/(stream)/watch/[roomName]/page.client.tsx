@@ -108,16 +108,33 @@ export default function WatchPage({ roomName, serverUrl }: WatchPageProps) {
     );
   }
 
+  const formatDate = (timestamp: string) => {
+    const date = moment(timestamp);
+
+    if (date.isSame(moment(), "day"))
+      return `Today at ${date.format("h:mm A")}`;
+    if (date.isSame(moment().add(1, "days"), "day"))
+      return `Tomorrow at ${date.format("h:mm A")}`;
+
+    // If within the next 7 days, show weekday
+    if (date.isBefore(moment().add(7, "days"), "day"))
+      return date.format("dddd [at] h:mm A");
+
+    // For later dates, use full format
+    return date.format("MMMM D, YYYY [at] h:mm A");
+  };
+
   if (!isLive) {
     return (
       <Flex align="center" justify="center" className="min-h-screen bg-gray-50">
         <Card className="p-6 max-w-[450px] bg-white rounded-lg shadow-lg border border-gray-200">
           <Heading size="4" className="text-center text-whitesmoke mb-4">
-            {decodeURI(roomName)} Not Live
+            {decodeURI(event?.roomName || "")} Not Live
           </Heading>
           <Flex className="flex-col mb-6">
             <Text size="3" className="text-center text-gray-600">
-              The stream is not live at the moment. Please check back later.
+              The stream is not live at the moment. Start time is illustrated
+              below.
             </Text>
           </Flex>
 
@@ -126,39 +143,16 @@ export default function WatchPage({ roomName, serverUrl }: WatchPageProps) {
               <Text size="2" className="font-semibold text-gray-700">
                 Start:{" "}
                 <span className="font-normal text-gray-500">
-                  {moment(event.startTime).isSame(new Date(), "day")
-                    ? `Today at ${moment(event.startTime).format("HH:mm")}`
-                    : moment(event.startTime).isSame(
-                        moment().add(1, "days"),
-                        "day"
-                      )
-                    ? `Tomorrow at ${moment(event.startTime).format("HH:mm")}`
-                    : moment(event.startTime).isBefore(
-                        moment().add(7, "days"),
-                        "days"
-                      )
-                    ? moment(event.startTime).calendar()
-                    : moment(event.startTime).format("YYYY-MM-DD HH:mm")}
+                  {formatDate(event.startTime)}
                 </span>
               </Text>
               <Text size="2" className="font-semibold text-gray-700 mt-2">
                 End:{" "}
                 <span className="font-normal text-gray-500">
-                  {moment(event.endTime).isSame(new Date(), "day")
-                    ? `Today at ${moment(event.endTime).format("HH:mm")}`
-                    : moment(event.endTime).isSame(
-                        moment().add(1, "days"),
-                        "day"
-                      )
-                    ? `Tomorrow at ${moment(event.endTime).format("HH:mm")}`
-                    : moment(event.endTime).isBefore(
-                        moment().add(7, "days"),
-                        "days"
-                      )
-                    ? moment(event.endTime).calendar()
-                    : moment(event.endTime).format("YYYY-MM-DD HH:mm")}
+                  {formatDate(event.endTime)}
                 </span>
               </Text>
+
               {event.description && (
                 <Text size="2" className="text-gray-600 mt-2">
                   <span className="font-semibold">Description:</span>{" "}
@@ -176,7 +170,7 @@ export default function WatchPage({ roomName, serverUrl }: WatchPageProps) {
           )}
 
           <Flex className="text-center mb-2 text-whitesmoke mt-2">Share:</Flex>
-          <ShareableLinks roomName={roomName} />
+          {event && <ShareableLinks event={event} />}
         </Card>
       </Flex>
     );
@@ -238,7 +232,7 @@ export default function WatchPage({ roomName, serverUrl }: WatchPageProps) {
               <StreamPlayer />
             </Box>
             <ReactionBar />
-            <ShareableLinks roomName={roomName} />
+            {event && <ShareableLinks event={event} />}
           </Flex>
           <Box className="bg-accent-2 min-w-[280px] border-l border-accent-5">
             <Chat />
